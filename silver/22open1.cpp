@@ -13,20 +13,27 @@ template <typename T> struct vec3:vector<vector<vector<T>>> {vec3()=default;vec3
 #define PTY y
 struct pt_t {int PTX,PTY;bool operator==(pt_t pt2)const{return PTX==pt2.PTX&&PTY==pt2.PTY;}};
 
+/*
+    construct directed graph w/ cows as vertices and i->a_i edge with weight v_i
+    each vertex has one outgoing edge
+    each connected component has one cycle
+    one edge's value can't be added to result sum, choose lowest edge value
+    repeatedly dfs from some random vertex which hasn't been visited yet, if detect cycle remove the minimum weight edge
+*/
+
 const int N=1e5;
 int n;
 ll a[N+1], v[N+1];
 
 bool vis[N+1];
 
-bool dfs(int u, vec<int> &path) {
+int dfs(int u, vec<int> &path) {
     if (vis[u]) {
         auto it=find(all(path),u);
         if (it!=end(path)) {
-            path=vec<int>(it,end(path));
-            return true;
+            return it-begin(path);
         }
-        return false;
+        return -1;
     }
     vis[u]=true;
     path.push_back(u);
@@ -34,8 +41,8 @@ bool dfs(int u, vec<int> &path) {
     return dfs(a[u],path);
 }
 
-ll contrib(vec<int> &path, bool cycle) {
-    ll mn=cycle ? v[*min_element(all(path),[](int i, int j){return v[i]<v[j];})] : 0;
+ll contrib(vec<int> &path, int st) {
+    ll mn=st==-1 ? 0 : v[*min_element(begin(path)+st,end(path),[](int i, int j){return v[i]<v[j];})];
     ll sum=accumulate(all(path),0ll,[](ll cur, int u){return cur+v[u];});
     return sum-mn;
 }
@@ -45,8 +52,8 @@ void solve() {
     for (int u=1; u<=n; ++u) {
         if (vis[u]) continue;
         vec<int> path;
-        bool cycle=dfs(u,path);
-        ans+=contrib(path,cycle);
+        int st=dfs(u,path);
+        ans+=contrib(path,st);
     }
 
     printf("%lld\n", ans);
